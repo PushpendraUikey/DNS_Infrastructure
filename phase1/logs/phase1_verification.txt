@@ -1,0 +1,84 @@
+CS6008 DNS Lab - Phase 1 verification transcript
+Generated: Tue Oct 20 15:20:57 IST 2026
+BIND version: BIND 9.20.29 (Stable Release) <id:c3d4465>
+
+########## docker compose ps ##########
+NAME          STATE     STATUS
+client        running   Up 2 minutes
+core-router   running   Up 2 minutes
+domain-ns     running   Up 2 minutes
+edge-router   running   Up 2 minutes
+resolver      running   Up 40 seconds
+root-ns       running   Up 2 minutes
+tld-ns        running   Up 2 minutes
+webserver     running   Up 2 minutes
+
+########## 1) dig example.com (from client) ##########
+
+; <<>> DiG 9.20.29 <<>> example.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41279
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 915a4e7a398fcd35010000006ad73981a925d0d10fee635c (good)
+;; QUESTION SECTION:
+;example.com.			IN	A
+
+;; ANSWER SECTION:
+example.com.		3566	IN	A	172.16.1.20
+
+;; Query time: 2 msec
+;; SERVER: 172.16.2.10#53(172.16.2.10) (UDP)
+;; WHEN: Tue Oct 20 09:50:57 UTC 2026
+;; MSG SIZE  rcvd: 84
+
+
+########## 1b) www.example.com +short ##########
+172.16.1.20
+
+########## 2) curl http://example.com ##########
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>example.com</title>
+  </head>
+  <body>
+    <h1>Welcome to example.com</h1>
+    <p>This is the real site, served by webserver at 172.16.1.20.</p>
+    <p>CS6008 Network Security &mdash; DNS Lab, Phase 1 baseline.</p>
+  </body>
+</html>
+
+########## 3) ISOLATION: dig @172.16.3.10 (root-ns) directly -> must fail ##########
+;; UDP setup with 172.16.3.10#53(172.16.3.10) for example.com failed: network unreachable.
+;; no servers could be reached
+
+########## 5) client routes (no default route, no auth-subnet route) ##########
+172.16.1.0/24 dev eth0 proto kernel scope link src 172.16.1.10 
+172.16.2.0/24 via 172.16.1.2 dev eth0 
+
+########## 5b) resolver routes ##########
+172.16.1.0/24 via 172.16.2.2 dev eth0 
+172.16.2.0/24 dev eth0 proto kernel scope link src 172.16.2.10 
+172.16.3.0/24 via 172.16.2.3 dev eth0 
+
+########## 4) Referral chain captured on core-router (resolver 172.16.2.10 <-> authoritative) ##########
+# (one fresh resolution; AAAA ns.com lines are the resolver resolving nameserver addresses)
+09:50:23.599461 eth0  In  IP 172.16.2.10.33061 > 172.16.3.10.53: 25773 [1au] NS? . (40)
+09:50:23.599722 eth1  In  IP 172.16.3.10.53 > 172.16.2.10.33061: 25773*- 1/0/1 NS root-ns. (76)
+09:50:23.599824 eth0  In  IP 172.16.2.10.36264 > 172.16.3.10.53: 31762% [1au] NS? com. (44)
+09:50:23.599959 eth1  In  IP 172.16.3.10.53 > 172.16.2.10.36264: 31762- 0/1/2 (93)
+09:50:23.610172 eth0  In  IP 172.16.2.10.50619 > 172.16.3.20.53: 26741% [1au] A? example.com. (52)
+09:50:23.610455 eth0  In  IP 172.16.2.10.50913 > 172.16.3.10.53: 36719% [1au] AAAA? ns.com. (63)
+09:50:23.610511 eth0  In  IP 172.16.2.10.59829 > 172.16.3.10.53: 51030 [1au] NS? . (56)
+09:50:23.610543 eth1  In  IP 172.16.3.20.53 > 172.16.2.10.50619: 26741- 0/1/2 (101)
+09:50:23.610610 eth1  In  IP 172.16.3.10.53 > 172.16.2.10.59829: 51030*- 1/0/1 NS root-ns. (76)
+09:50:23.610615 eth1  In  IP 172.16.3.10.53 > 172.16.2.10.50913: 36719- 0/1/2 (93)
+09:50:23.610646 eth0  In  IP 172.16.2.10.53910 > 172.16.3.30.53: 27884% [1au] A? example.com. (52)
+09:50:23.611021 eth1  In  IP 172.16.3.30.53 > 172.16.2.10.53910: 27884*- 1/1/2 A 172.16.1.20 (117)
+09:50:23.611526 eth0  In  IP 172.16.2.10.39767 > 172.16.3.20.53: 64547% [1au] AAAA? ns.com. (63)
+09:50:23.611943 eth1  In  IP 172.16.3.20.53 > 172.16.2.10.39767: 64547*- 0/1/1 (111)
