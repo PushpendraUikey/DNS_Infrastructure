@@ -37,3 +37,6 @@ rndc.key
 *-key.pem
 privkey*.pem
 *.csr
+
+logs/
+captures/
