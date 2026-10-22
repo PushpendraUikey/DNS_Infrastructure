@@ -25,6 +25,8 @@ dsset-*
 keyset-*
 *.mkeys
 managed-keys.bind*
+build/
+trust-anchor.conf
 
 # ─── BIND runtime files (created when named runs) ───────────────────
 *.jnl
