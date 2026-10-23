@@ -42,4 +42,6 @@ privkey*.pem
 
 logs/
 captures/
+keys/
+pki/
 
