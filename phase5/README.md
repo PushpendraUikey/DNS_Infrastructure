@@ -85,15 +85,3 @@ To return to the walkable state: `./sign.sh && docker restart domain-ns`.
 ```sh
 docker compose down
 ```
-
-## Notes for the report
-
-- **Recovered names:** `www`, `ns`, `dev`, `vpn`, `mail`, `db`, `backup` — the hidden
-  internal hosts fall out of the walk even though they're advertised nowhere.
-- **Why it leaks:** plain DNS answers "no such name" with nothing attached; a *signed*
-  zone must carry a pre-signed proof, and the only way to pre-sign "this name is absent"
-  is to point at the real names on either side. NSEC makes that gap explicit and chained.
-- **What the fix costs / what still leaks:** NSEC3 hashes the names, so this online walk
-  fails — but NSEC3 hashes can still be brute-forced **offline** from a captured response.
-  NSEC3 raises the cost of enumeration; it does not make it impossible. (Opt-out and
-  other trade-offs are worth a sentence here too.)

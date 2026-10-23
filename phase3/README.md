@@ -96,14 +96,3 @@ the data — which is exactly what the resolver rejects.
 ./run.sh reset                 # stop interceptor, undivert, flush cache
 docker compose down
 ```
-
-## Notes for the report
-
-- **What the resolver checks:** the RRSIG over the `example.com` A RRset, up the DS/DNSKEY
-  chain to the root trust anchor. The forged A breaks that signature → bogus → SERVFAIL.
-- **What the attacker can still read:** everything — DNSSEC signs, it does not encrypt.
-  Compare the attacked capture with Phase 1: the same cleartext is visible on the wire.
-- **So DNSSEC protects** integrity and origin authenticity, **not** confidentiality — which
-  is what Phase 7 (DoT/DoH) goes on to address.
-- **Keys in the repo:** no private key is committed. `.gitignore` excludes `K*.private`,
-  `K*.key`, `*.signed`, and `dsset-*`; the trust anchor holds only the public root KSK.

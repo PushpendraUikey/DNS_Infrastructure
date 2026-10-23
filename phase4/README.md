@@ -76,18 +76,3 @@ docker compose down
 ```
 
 To go back to Run A after Run B: `./sign.sh && ./run.sh reload`.
-
-## Notes for the report
-
-- **Run A — why stripping fails:** downgrade resistance does not come from the
-  signatures inside `example.com`; it comes from the **DS record in the parent `com`
-  zone**. That DS is signed by `com` and anchored up to the root, so the on-path
-  attacker cannot remove or forge the *authenticated* statement "example.com is signed."
-  Strip the on-the-wire signatures and the resolver still expects them → bogus → SERVFAIL.
-- **Run B — the single change:** the parent publishes no DS. That one omission breaks the
-  authenticated chain *into* `example.com`, so the resolver has no signed instruction to
-  demand DNSSEC and falls back to treating the zone as insecure.
-- **Where downgrade resistance lives:** in the unbroken DS chain from the root down, not
-  in any single zone's own signatures. **The operator mistake that forfeits it:** signing
-  a zone but never publishing its DS in the parent (e.g. forgetting to hand the DS to the
-  registrar).
